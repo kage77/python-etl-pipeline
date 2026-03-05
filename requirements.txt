@@ -1,0 +1,23 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# requirements.txt  —  Python ETL Pipeline
+# https://github.com/kage77/python-etl-pipeline
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Core data processing
+pandas>=2.0.0
+numpy>=1.24.0
+openpyxl>=3.1.0          # .xlsx read/write
+xlrd>=2.0.1              # legacy .xls support
+
+# HTTP — sample dataset download
+requests>=2.31.0
+
+# Configuration
+PyYAML>=6.0
+
+# Database — used for both SQLite and SQL Server modes
+sqlalchemy>=2.0.0
+
+# ── SQL Server only (optional) ────────────────────────────────────────────────
+# Uncomment if using destination.mode = "sqlserver"
+# pyodbc>=4.0.39

@@ -1,0 +1,107 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# config.yaml  —  ETL Pipeline Configuration
+# All settings here can be overridden via CLI flags.
+# See README.md for full documentation.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── SOURCE ────────────────────────────────────────────────────────────────────
+source:
+
+  # true  → auto-download the bundled public sample dataset
+  # false → use your own file via local_file_path below
+  use_sample_dataset: true
+
+  # Public sample dataset (Sales data — GitHub raw URL)
+  # Replace with any direct URL to an .xlsx or .xls file
+  sample_dataset_url: "https://raw.githubusercontent.com/bharathirajatut/sample-excel-dataset/master/sales.xls"
+
+  # Path to your own Excel file (used when use_sample_dataset: false)
+  # Examples:
+  #   local_file_path: "C:/Users/you/Downloads/my_data.xlsx"
+  #   local_file_path: "./data/monthly_report.xlsx"
+  local_file_path: null
+
+  # Sheet to load: 0 = first sheet, or provide the sheet name as a string
+  # Examples:  sheet_name: 0  |  sheet_name: "Orders"
+  sheet_name: 0
+
+  # Row number (0-indexed) to use as the column header
+  header_row: 0
+
+  # Rows to skip before the header (useful for files with title banners)
+  skip_rows: 0
+
+
+# ── DESTINATION ───────────────────────────────────────────────────────────────
+destination:
+
+  # "sqlite"    → runs locally, no SQL Server needed (great for demo/dev)
+  # "sqlserver" → connects to a real Microsoft SQL Server instance
+  mode: "sqlite"
+
+  # SQLite only: path to the .db file that will be created
+  sqlite_db_path: "etl_demo.db"
+
+  # Target table name
+  table_name: "sales_data"
+
+  # SQL Server schema (ignored in SQLite mode)
+  schema: "dbo"
+
+  # What to do if the table already exists:
+  #   "replace" — drop and recreate (safe default for dev)
+  #   "append"  — add rows to existing table
+  #   "fail"    — raise an error if table exists
+  if_table_exists: "replace"
+
+  # Number of rows per INSERT batch
+  # Recommended: 200–1000 for SQL Server, 500–5000 for SQLite
+  batch_size: 500
+
+
+# ── SQL SERVER CONNECTION ─────────────────────────────────────────────────────
+# Only used when destination.mode = "sqlserver"
+sql_server:
+
+  # Your SQL Server hostname, IP, or Azure endpoint
+  # Examples:
+  #   server: "MYSERVER\\SQLEXPRESS"
+  #   server: "192.168.1.50"
+  #   server: "myserver.database.windows.net"
+  server: "YOUR_SERVER_NAME"
+
+  # Target database name
+  database: "YOUR_DATABASE_NAME"
+
+  # Leave blank for Windows Authentication
+  # Fill in for SQL Server Authentication
+  username: ""
+  password: ""
+
+  # Check installed drivers:
+  #   python -c "import pyodbc; print(pyodbc.drivers())"
+  driver: "ODBC Driver 17 for SQL Server"
+
+  # true  = Windows / AD Authentication (recommended for on-prem)
+  # false = SQL Server Authentication (username + password)
+  trusted_connection: true
+
+
+# ── PIPELINE BEHAVIOR ─────────────────────────────────────────────────────────
+pipeline:
+
+  # How many sample rows to print in the log after transform
+  log_sample_rows: 5
+
+  # Automatically infer and map column types to SQL types
+  infer_types: true
+
+  # Convert column names to lowercase snake_case
+  # Example: "Order Date" → "order_date"
+  clean_column_names: true
+
+  # Strip leading/trailing whitespace from all string values
+  trim_strings: true
+
+  # Drop rows where every single column is null/empty
+  drop_fully_empty_rows: true
