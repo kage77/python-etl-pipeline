@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>python-etl-pipeline</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@200;300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #060608;
+  --surface: #0e0e12;
+  --card: #13131a;
+  --border: #1e1e2a;
+  --border2: #2a2a3a;
+  --text: #f0eff5;
+  --muted: #5a5a72;
+  --muted2: #8a8aaa;
+  --green: #00e5a0;
+  --blue: #4f8fff;
+  --orange: #ff8c42;
+  --purple: #9b6dff;
+  --red: #ff5566;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--black);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.4;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 0 48px; height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(6,6,8,0.7);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.3s;
+}
+.nav-logo {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px; font-weight: 500;
+  color: var(--muted2); letter-spacing: 0.5px;
+}
+.nav-logo span { color: var(--green); }
+.nav-links { display: flex; gap: 32px; }
+.nav-links a {
+  font-size: 12px; font-weight: 400; color: var(--muted);
+  text-decoration: none; letter-spacing: 0.5px;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-cta {
+  font-size: 12px; font-weight: 500;
+  padding: 7px 18px; border-radius: 20px;
+  background: var(--green); color: #000;
+  text-decoration: none; letter-spacing: 0.3px;
+  transition: opacity 0.2s;
+}
+.nav-cta:hover { opacity: 0.85; }
+
+/* ── SECTIONS ── */
+section { position: relative; z-index: 1; }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 120px 48px 80px;
+  position: relative; overflow: hidden;
+}
+
+/* Radial glow */
+.hero::after {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,229,160,0.07) 0%, transparent 70%);
+  top: 50%; left: 50%; transform: translate(-50%, -60%);
+  pointer-events: none;
+}
+
+.hero-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; font-weight: 500; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--green);
+  border: 1px solid rgba(0,229,160,0.25);
+  padding: 6px 16px; border-radius: 20px;
+  margin-bottom: 36px;
+  display: inline-flex; align-items: center; gap: 8px;
+  animation: fadeUp 0.8s ease both;
+}
+.hero-tag::before {
+  content: '';
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.6)} }
+
+h1 {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(52px, 8vw, 96px);
+  font-weight: 400; line-height: 1.0;
+  letter-spacing: -3px; margin-bottom: 28px;
+  animation: fadeUp 0.8s 0.1s ease both;
+}
+h1 em { font-style: italic; color: var(--green); }
+
+.hero-sub {
+  font-size: clamp(16px, 2vw, 20px);
+  color: var(--muted2); font-weight: 300;
+  max-width: 520px; line-height: 1.7; margin-bottom: 48px;
+  animation: fadeUp 0.8s 0.2s ease both;
+}
+
+.hero-btns {
+  display: flex; gap: 14px; justify-content: center;
+  animation: fadeUp 0.8s 0.3s ease both;
+}
+.btn-main {
+  padding: 14px 32px; border-radius: 30px;
+  background: var(--green); color: #000;
+  font-size: 14px; font-weight: 500;
+  text-decoration: none; letter-spacing: 0.3px;
+  transition: all 0.2s;
+}
+.btn-main:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,229,160,0.3); }
+.btn-ghost {
+  padding: 14px 32px; border-radius: 30px;
+  border: 1px solid var(--border2); color: var(--muted2);
+  font-size: 14px; font-weight: 400;
+  text-decoration: none; letter-spacing: 0.3px;
+  transition: all 0.2s;
+}
+.btn-ghost:hover { border-color: var(--muted2); color: var(--text); }
+
+/* Scroll hint */
+.scroll-hint {
+  position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--muted); font-size: 11px; letter-spacing: 2px;
+  animation: fadeUp 1s 0.8s ease both;
+}
+.scroll-hint::after {
+  content: '';
+  width: 1px; height: 40px;
+  background: linear-gradient(to bottom, var(--muted), transparent);
+  animation: scrollLine 2s infinite;
+}
+@keyframes scrollLine { 0%{transform:scaleY(0);transform-origin:top} 50%{transform:scaleY(1);transform-origin:top} 51%{transform-origin:bottom} 100%{transform:scaleY(0);transform-origin:bottom} }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── PARTICLE CANVAS ── */
+#particle-canvas {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+}
+
+/* ── SCROLL SECTIONS ── */
+.scroll-section {
+  min-height: 100vh;
+  display: flex; align-items: center;
+  padding: 120px 48px;
+  max-width: 1200px; margin: 0 auto;
+  gap: 80px;
+}
+.scroll-section.reverse { flex-direction: row-reverse; }
+
+.section-text { flex: 1; }
+.section-visual { flex: 1; position: relative; }
+
+.step-number {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 3px; color: var(--green);
+  text-transform: uppercase; margin-bottom: 16px;
+  opacity: 0; transform: translateY(20px);
+  transition: all 0.7s ease;
+}
+.section-text h2 {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 400; letter-spacing: -2px;
+  line-height: 1.1; margin-bottom: 20px;
+  opacity: 0; transform: translateY(24px);
+  transition: all 0.7s 0.1s ease;
+}
+.section-text h2 em { font-style: italic; color: var(--green); }
+.section-text p {
+  font-size: 17px; color: var(--muted2); font-weight: 300;
+  line-height: 1.8; max-width: 460px;
+  opacity: 0; transform: translateY(20px);
+  transition: all 0.7s 0.2s ease;
+}
+
+.in-view .step-number,
+.in-view .section-text h2,
+.in-view .section-text p { opacity: 1; transform: translateY(0); }
+
+/* ── EXCEL CARD ── */
+.excel-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  opacity: 0; transform: translateY(32px) scale(0.97);
+  transition: all 0.8s 0.2s ease;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+}
+.in-view .excel-card { opacity: 1; transform: translateY(0) scale(1); }
+
+.card-bar {
+  background: var(--surface);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
+.card-title { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-left: 6px; letter-spacing: 1px; }
+
+.excel-table { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 11px; }
+.excel-table th {
+  padding: 8px 14px; text-align: left;
+  background: rgba(255,255,255,0.03);
+  color: var(--muted); font-weight: 500; letter-spacing: 1px; font-size: 9px; text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.excel-table td {
+  padding: 7px 14px; border-bottom: 1px solid rgba(255,255,255,0.03);
+  color: var(--muted2); white-space: nowrap;
+}
+.excel-table tr:last-child td { border-bottom: none; }
+.null-cell { color: var(--red) !important; font-style: italic; }
+.excel-table tr { transition: background 0.2s; }
+.excel-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+/* ── SCHEMA VISUAL ── */
+.schema-visual {
+  display: flex; flex-direction: column; gap: 8px;
+  opacity: 0; transform: translateX(32px);
+  transition: all 0.8s 0.2s ease;
+}
+.in-view .schema-visual { opacity: 1; transform: translateX(0); }
+
+.schema-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 16px;
+  opacity: 0; transform: translateX(20px);
+  transition: all 0.5s ease;
+}
+.schema-row.visible { opacity: 1; transform: translateX(0); }
+
+.schema-col-name {
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  color: var(--blue); font-weight: 500; width: 130px; flex-shrink: 0;
+}
+.schema-arrow { color: var(--muted); font-size: 12px; flex-shrink: 0; }
+.schema-type {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  font-weight: 500; padding: 3px 10px; border-radius: 6px;
+  flex-shrink: 0; width: 110px; text-align: center;
+}
+.type-dt      { background: rgba(0,229,160,0.12); color: var(--green); }
+.type-float   { background: rgba(79,143,255,0.12); color: var(--blue); }
+.type-int     { background: rgba(155,109,255,0.12); color: var(--purple); }
+.type-bit     { background: rgba(255,140,66,0.12); color: var(--orange); }
+.type-varchar { background: rgba(255,85,102,0.12); color: #ff7a88; }
+
+.schema-null {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  margin-left: auto; color: var(--muted);
+}
+.schema-null.has-null { color: var(--red); }
+
+/* ── DDL SECTION ── */
+.ddl-wrap {
+  opacity: 0; transform: translateY(32px);
+  transition: all 0.8s 0.2s ease;
+}
+.in-view .ddl-wrap { opacity: 1; transform: translateY(0); }
+
+.code-window {
+  background: #0a0a0e; border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+}
+.code-bar {
+  background: var(--surface); padding: 12px 16px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+pre {
+  padding: 24px; font-family: 'DM Mono', monospace;
+  font-size: 12px; line-height: 2; color: var(--muted2);
+  overflow-x: auto;
+}
+.c-comment { color: #3d3d55; }
+.c-kw  { color: #9b6dff; }
+.c-tbl { color: var(--blue); }
+.c-col { color: var(--green); font-weight: 500; }
+.c-type{ color: var(--orange); }
+.c-nn  { color: #4ade80; }
+.c-null{ color: var(--red); }
+
+/* ── TRANSFORM SECTION ── */
+.transform-visual {
+  display: grid; grid-template-columns: 1fr 40px 1fr; gap: 0;
+  align-items: start;
+  opacity: 0; transform: translateY(32px);
+  transition: all 0.8s 0.2s ease;
+}
+.in-view .transform-visual { opacity: 1; transform: translateY(0); }
+
+.transform-col { display: flex; flex-direction: column; gap: 8px; }
+.t-label {
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 6px 12px; margin-bottom: 4px;
+}
+.t-label.before { color: var(--muted); }
+.t-label.after  { color: var(--green); }
+
+.t-cell {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  color: var(--muted2);
+}
+.t-cell.changed {
+  border-color: rgba(0,229,160,0.3);
+  background: rgba(0,229,160,0.05);
+  color: var(--green);
+}
+.transform-arrows {
+  display: flex; flex-direction: column; gap: 8px;
+  align-items: center; justify-content: flex-start;
+  padding-top: 34px;
+}
+.t-arrow { color: var(--muted); font-size: 14px; height: 38px; display: flex; align-items: center; }
+
+/* ── LOAD SECTION ── */
+.load-visual {
+  position: relative;
+  opacity: 0; transform: scale(0.95);
+  transition: all 0.8s 0.2s ease;
+}
+.in-view .load-visual { opacity: 1; transform: scale(1); }
+
+.db-container {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px; overflow: hidden;
+  position: relative;
+}
+.db-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+}
+.db-icon { font-size: 24px; }
+.db-title { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); font-weight: 500; }
+.db-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.progress-bars { display: flex; flex-direction: column; gap: 10px; }
+.prog-row { display: flex; align-items: center; gap: 12px; }
+.prog-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted2); width: 100px; flex-shrink: 0; }
+.prog-track {
+  flex: 1; height: 4px; background: var(--border);
+  border-radius: 2px; overflow: hidden;
+}
+.prog-fill {
+  height: 100%; border-radius: 2px;
+  width: 0%; transition: width 1.5s ease;
+  background: linear-gradient(90deg, var(--green), #00ffb3);
+}
+.prog-val { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--green); width: 36px; text-align: right; }
+
+.batch-log {
+  margin-top: 20px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.batch-line {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--muted); padding: 4px 0; line-height: 1.8;
+  opacity: 0; transition: opacity 0.4s ease;
+}
+.batch-line.show { opacity: 1; }
+.batch-line .ok { color: var(--green); }
+
+.count-display {
+  margin-top: 20px; padding: 16px;
+  background: rgba(0,229,160,0.06);
+  border: 1px solid rgba(0,229,160,0.2);
+  border-radius: 10px;
+  text-align: center;
+  opacity: 0; transition: opacity 0.5s ease;
+}
+.count-display.show { opacity: 1; }
+.count-num {
+  font-family: 'Instrument Serif', serif;
+  font-size: 42px; color: var(--green); letter-spacing: -2px;
+  line-height: 1;
+}
+.count-label { font-size: 11px; color: var(--muted); margin-top: 4px; letter-spacing: 1.5px; text-transform: uppercase; }
+
+/* ── STATS ── */
+.stats-section {
+  padding: 120px 48px;
+  max-width: 1000px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 2px;
+}
+.stat-card {
+  padding: 48px 32px; background: var(--card);
+  border: 1px solid var(--border);
+  opacity: 0; transform: translateY(24px);
+  transition: all 0.6s ease;
+}
+.stat-card.visible { opacity: 1; transform: translateY(0); }
+.stat-card:first-child { border-radius: 16px 0 0 16px; }
+.stat-card:last-child  { border-radius: 0 16px 16px 0; }
+.stat-n {
+  font-family: 'Instrument Serif', serif;
+  font-size: 52px; letter-spacing: -3px; line-height: 1;
+  margin-bottom: 8px;
+}
+.stat-l { font-size: 13px; color: var(--muted2); font-weight: 300; }
+
+/* ── FINAL CTA ── */
+.cta-section {
+  padding: 160px 48px; text-align: center;
+  position: relative; overflow: hidden;
+}
+.cta-section::before {
+  content: '';
+  position: absolute; width: 800px; height: 800px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,229,160,0.05) 0%, transparent 65%);
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+}
+.cta-section h2 {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(44px, 7vw, 80px);
+  font-weight: 400; letter-spacing: -3px;
+  line-height: 1.05; margin-bottom: 24px;
+  opacity: 0; transform: translateY(24px);
+  transition: all 0.8s ease;
+}
+.cta-section h2 em { font-style: italic; color: var(--green); }
+.cta-section p {
+  font-size: 18px; color: var(--muted2); font-weight: 300;
+  margin-bottom: 48px; max-width: 480px; margin-left: auto; margin-right: auto;
+  opacity: 0; transform: translateY(20px);
+  transition: all 0.8s 0.1s ease;
+}
+.cta-section .cta-btns {
+  opacity: 0; transform: translateY(20px);
+  transition: all 0.8s 0.2s ease;
+}
+.cta-section.in-view h2,
+.cta-section.in-view p,
+.cta-section.in-view .cta-btns { opacity: 1; transform: translateY(0); }
+
+/* ── CODE SNIPPET HERO ── */
+.hero-code {
+  margin-top: 56px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px 24px;
+  font-family: 'DM Mono', monospace; font-size: 13px;
+  line-height: 2; color: var(--muted2); text-align: left;
+  max-width: 480px;
+  animation: fadeUp 0.8s 0.4s ease both;
+}
+.hero-code .cmd { color: var(--green); }
+.hero-code .cmt { color: var(--muted); font-size: 11px; }
+
+/* ── FOOTER ── */
+footer {
+  padding: 48px; text-align: center;
+  border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--muted);
+  font-family: 'DM Mono', monospace; letter-spacing: 0.5px;
+}
+footer a { color: var(--muted2); text-decoration: none; transition: color 0.2s; }
+footer a:hover { color: var(--green); }
+
+@media (max-width: 768px) {
+  .scroll-section, .scroll-section.reverse { flex-direction: column; padding: 80px 24px; gap: 48px; }
+  nav { padding: 0 24px; }
+  .nav-links { display: none; }
+  .stats-section { grid-template-columns: 1fr 1fr; }
+  .stat-card:first-child { border-radius: 16px 0 0 0; }
+  .stat-card:last-child  { border-radius: 0 0 16px 0; }
+  .transform-visual { grid-template-columns: 1fr 30px 1fr; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">⟳ <span>etl</span>-pipeline.py</div>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#schema">Schema</a>
+    <a href="#load">Load</a>
+  </div>
+  <a href="https://github.com/kage77/python-etl-pipeline" class="nav-cta" target="_blank">View on GitHub</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">Open Source · MIT · Python 3.9+</div>
+  <h1>Excel to SQL,<br/><em>automatically.</em></h1>
+  <p class="hero-sub">A Python pipeline that reads any spreadsheet, figures out every column type on its own, writes the SQL, and loads your data — no manual mapping, ever.</p>
+  <div class="hero-btns">
+    <a href="https://github.com/kage77/python-etl-pipeline" class="btn-main" target="_blank">Get started →</a>
+    <a href="#how" class="btn-ghost">See how it works</a>
+  </div>
+  <div class="hero-code">
+    <div class="cmt"># three commands to run it</div>
+    <div><span class="cmd">git clone</span> github.com/kage77/python-etl-pipeline</div>
+    <div><span class="cmd">pip install</span> -r requirements.txt</div>
+    <div><span class="cmd">python</span> etl_pipeline.py</div>
+  </div>
+  <div class="scroll-hint">SCROLL</div>
+</section>
+
+<!-- STEP 1 — EXTRACT -->
+<section id="how">
+  <div class="scroll-section" data-animate>
+    <div class="section-text">
+      <div class="step-number">Step 01 — Extract</div>
+      <h2>Any Excel file.<br/><em>Instantly.</em></h2>
+      <p>Point the pipeline at a local <code style="color:var(--green);font-family:'DM Mono',monospace">.xlsx</code> or <code style="color:var(--green);font-family:'DM Mono',monospace">.xls</code> file — or let it pull the bundled sample dataset straight from the internet. One read, full DataFrame.</p>
+    </div>
+    <div class="section-visual">
+      <div class="excel-card">
+        <div class="card-bar">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="card-title">sales_data.xlsx</div>
+        </div>
+        <table class="excel-table">
+          <thead>
+            <tr><th>Order ID</th><th>Order Date</th><th>Customer</th><th>Sales</th><th>Qty</th><th>Profit</th><th>Returned?</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>CA-2023-100000</td><td>2023-04-13</td><td>Customer 0066</td><td>1247.50</td><td>3</td><td>142.30</td><td>False</td></tr>
+            <tr><td>CA-2023-100001</td><td>2023-12-15</td><td class="null-cell">NULL</td><td>892.00</td><td>2</td><td class="null-cell">NULL</td><td>False</td></tr>
+            <tr><td>CA-2023-100002</td><td>2023-09-28</td><td>Customer 0073</td><td>56.30</td><td>10</td><td>18.90</td><td>False</td></tr>
+            <tr><td>CA-2023-100003</td><td>2023-04-17</td><td>Customer 0065</td><td>3499.99</td><td>1</td><td>280.50</td><td>True</td></tr>
+            <tr><td>CA-2023-100004</td><td>2023-03-13</td><td>Customer 0075</td><td>34.80</td><td>5</td><td>12.40</td><td>False</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 2 — SCHEMA -->
+<section id="schema">
+  <div class="scroll-section reverse" data-animate>
+    <div class="section-text">
+      <div class="step-number">Step 02 — Schema Inference</div>
+      <h2>It reads the<br/><em>data itself.</em></h2>
+      <p>Every column is inspected individually. The engine checks dtype, samples values for date patterns, measures string lengths, and assigns the most precise SQL type — no input from you.</p>
+    </div>
+    <div class="section-visual">
+      <div class="schema-visual" id="schema-rows">
+        <div class="schema-row"><span class="schema-col-name">order_id</span><span class="schema-arrow">→</span><span class="schema-type type-varchar">NVARCHAR(50)</span><span class="schema-null">NOT NULL</span></div>
+        <div class="schema-row"><span class="schema-col-name">order_date</span><span class="schema-arrow">→</span><span class="schema-type type-dt">DATETIME</span><span class="schema-null">NOT NULL</span></div>
+        <div class="schema-row"><span class="schema-col-name">ship_date</span><span class="schema-arrow">→</span><span class="schema-type type-dt">DATETIME</span><span class="schema-null">NOT NULL</span></div>
+        <div class="schema-row"><span class="schema-col-name">customer_name</span><span class="schema-arrow">→</span><span class="schema-type type-varchar">NVARCHAR(50)</span><span class="schema-null has-null">NULL ⚠</span></div>
+        <div class="schema-row"><span class="schema-col-name">sales</span><span class="schema-arrow">→</span><span class="schema-type type-float">FLOAT</span><span class="schema-null">NOT NULL</span></div>
+        <div class="schema-row"><span class="schema-col-name">quantity</span><span class="schema-arrow">→</span><span class="schema-type type-int">INT</span><span class="schema-null">NOT NULL</span></div>
+        <div class="schema-row"><span class="schema-col-name">profit</span><span class="schema-arrow">→</span><span class="schema-type type-float">FLOAT</span><span class="schema-null has-null">NULL ⚠</span></div>
+        <div class="schema-row"><span class="schema-col-name">returned</span><span class="schema-arrow">→</span><span class="schema-type type-bit">BIT</span><span class="schema-null">NOT NULL</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 3 — DDL -->
+<section>
+  <div class="scroll-section" data-animate>
+    <div class="section-text">
+      <div class="step-number">Step 03 — DDL Generation</div>
+      <h2>The SQL<br/><em>writes itself.</em></h2>
+      <p>From the inference report, a complete <code style="color:var(--green);font-family:'DM Mono',monospace">CREATE TABLE</code> statement is generated and saved. <code style="color:var(--orange);font-family:'DM Mono',monospace">NULL</code> vs <code style="color:var(--green);font-family:'DM Mono',monospace">NOT NULL</code> is set from real data counts — not assumptions.</p>
+    </div>
+    <div class="section-visual">
+      <div class="ddl-wrap">
+        <div class="code-window">
+          <div class="code-bar">
+            <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+            <div class="card-title">generated_ddl.sql</div>
+          </div>
+          <pre><span class="c-comment">-- Auto-generated  2026-03-05 03:01:25</span>
+<span class="c-kw">CREATE TABLE</span> <span class="c-tbl">[dbo].[sales_data]</span> (
+  <span class="c-col">[order_id]</span>      <span class="c-type">NVARCHAR(50)</span>  <span class="c-nn">NOT NULL</span>,
+  <span class="c-col">[order_date]</span>    <span class="c-type">DATETIME</span>      <span class="c-nn">NOT NULL</span>,
+  <span class="c-col">[ship_date]</span>     <span class="c-type">DATETIME</span>      <span class="c-nn">NOT NULL</span>,
+  <span class="c-col">[customer_name]</span> <span class="c-type">NVARCHAR(50)</span>  <span class="c-null">NULL</span>,
+  <span class="c-col">[segment]</span>       <span class="c-type">NVARCHAR(50)</span>  <span class="c-nn">NOT NULL</span>,
+  <span class="c-col">[sales]</span>         <span class="c-type">FLOAT</span>         <span class="c-nn">NOT NULL</span>,
+  <span class="c-col">[quantity]</span>      <span class="c-type">INT</span>           <span class="c-nn">NOT NULL</span>,
+  <span class="c-col">[profit]</span>        <span class="c-type">FLOAT</span>         <span class="c-null">NULL</span>,
+  <span class="c-col">[returned]</span>      <span class="c-type">BIT</span>           <span class="c-nn">NOT NULL</span>
+);</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 4 — TRANSFORM -->
+<section>
+  <div class="scroll-section reverse" data-animate>
+    <div class="section-text">
+      <div class="step-number">Step 04 — Transform</div>
+      <h2>Cleaned before<br/><em>it loads.</em></h2>
+      <p>Column names normalised to <code style="color:var(--green);font-family:'DM Mono',monospace">snake_case</code>. Strings trimmed. Date-like text coerced to real datetimes. Empty rows dropped. Every time.</p>
+    </div>
+    <div class="section-visual">
+      <div class="transform-visual">
+        <div class="transform-col">
+          <div class="t-label before">Before</div>
+          <div class="t-cell">"Order ID"</div>
+          <div class="t-cell">"Order Date" (string)</div>
+          <div class="t-cell">"Sub-Category"</div>
+          <div class="t-cell">"&nbsp;&nbsp;Customer&nbsp;&nbsp;"</div>
+          <div class="t-cell">True / False</div>
+        </div>
+        <div class="transform-arrows">
+          <div class="t-arrow">→</div>
+          <div class="t-arrow">→</div>
+          <div class="t-arrow">→</div>
+          <div class="t-arrow">→</div>
+          <div class="t-arrow">→</div>
+        </div>
+        <div class="transform-col">
+          <div class="t-label after">After ✓</div>
+          <div class="t-cell changed">order_id</div>
+          <div class="t-cell changed">order_date (datetime)</div>
+          <div class="t-cell changed">sub_category</div>
+          <div class="t-cell changed">Customer</div>
+          <div class="t-cell changed">1 / 0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 5 — LOAD -->
+<section id="load">
+  <div class="scroll-section" data-animate>
+    <div class="section-text">
+      <div class="step-number">Step 05 — Load</div>
+      <h2>Into the<br/><em>warehouse.</em></h2>
+      <p>Data flows in configurable batches. One line in <code style="color:var(--green);font-family:'DM Mono',monospace">config.yaml</code> switches between local SQLite and a full SQL Server instance — Windows Auth or SQL Auth both supported.</p>
+    </div>
+    <div class="section-visual">
+      <div class="load-visual" id="load-visual">
+        <div class="db-container">
+          <div class="db-header">
+            <div class="db-icon">🗄️</div>
+            <div>
+              <div class="db-title">sales_data</div>
+              <div class="db-sub">SQL Server · dbo schema · batch_size: 100</div>
+            </div>
+          </div>
+          <div class="progress-bars" id="progress-bars">
+            <div class="prog-row"><span class="prog-label">Batch 1 / 3</span><div class="prog-track"><div class="prog-fill" id="p1"></div></div><span class="prog-val" id="v1">0%</span></div>
+            <div class="prog-row"><span class="prog-label">Batch 2 / 3</span><div class="prog-track"><div class="prog-fill" id="p2"></div></div><span class="prog-val" id="v2">0%</span></div>
+            <div class="prog-row"><span class="prog-label">Batch 3 / 3</span><div class="prog-track"><div class="prog-fill" id="p3"></div></div><span class="prog-val" id="v3">0%</span></div>
+          </div>
+          <div class="batch-log" id="batch-log">
+            <div class="batch-line" id="bl1"><span class="ok">[INFO]</span>  Batch 1/3 → 100 rows committed</div>
+            <div class="batch-line" id="bl2"><span class="ok">[INFO]</span>  Batch 2/3 → 100 rows committed</div>
+            <div class="batch-line" id="bl3"><span class="ok">[INFO]</span>  Batch 3/3 →  50 rows committed</div>
+            <div class="batch-line" id="bl4"><span class="ok">[DONE]</span>  SELECT COUNT(*) = <span class="ok">250 ✓</span></div>
+          </div>
+          <div class="count-display" id="count-display">
+            <div class="count-num" id="count-num">0</div>
+            <div class="count-label">rows loaded &amp; verified</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-section" id="stats">
+  <div class="stat-card"><div class="stat-n" style="color:var(--green)">5</div><div class="stat-l">Pipeline stages</div></div>
+  <div class="stat-card"><div class="stat-n" style="color:var(--blue)">7</div><div class="stat-l">SQL types auto-detected</div></div>
+  <div class="stat-card"><div class="stat-n" style="color:var(--orange)">0</div><div class="stat-l">Manual column mapping</div></div>
+  <div class="stat-card"><div class="stat-n">1</div><div class="stat-l">Config file to run it all</div></div>
+</div>
+
+<!-- CTA -->
+<section class="cta-section" data-cta>
+  <h2>Built for data people<br/>who value their <em>time.</em></h2>
+  <p>Open source, MIT licensed, self-contained demo included. No SQL Server needed to try it.</p>
+  <div class="cta-btns">
+    <a href="https://github.com/kage77/python-etl-pipeline" class="btn-main" target="_blank">View on GitHub →</a>
+  </div>
+</section>
+
+<footer>
+  <p>github.com/<a href="https://github.com/kage77" target="_blank">kage77</a> / python-etl-pipeline &nbsp;·&nbsp; MIT License</p>
+</footer>
+
+<script>
+// ── PARTICLES ─────────────────────────────────────────────────────────────
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let W, H;
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x  = Math.random() * W;
+    this.y  = Math.random() * H;
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.vy = (Math.random() - 0.5) * 0.3;
+    this.r  = Math.random() * 1.2 + 0.3;
+    this.a  = Math.random() * 0.25 + 0.05;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(0,229,160,${this.a})`;
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+function animParticles() {
+  ctx.clearRect(0, 0, W, H);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animParticles);
+}
+animParticles();
+
+// ── SCROLL OBSERVER ───────────────────────────────────────────────────────
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+
+    const el = e.target;
+    el.classList.add('in-view');
+
+    // Stagger schema rows
+    if (el.querySelector('#schema-rows')) {
+      el.querySelectorAll('.schema-row').forEach((row, i) => {
+        setTimeout(() => row.classList.add('visible'), i * 100 + 300);
+      });
+    }
+
+    // Load animation
+    if (el.querySelector('#load-visual')) {
+      triggerLoad();
+    }
+
+    obs.unobserve(el);
+  });
+}, { threshold: 0.2 });
+
+document.querySelectorAll('[data-animate]').forEach(el => obs.observe(el));
+
+// CTA observer
+const ctaObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in-view'); });
+}, { threshold: 0.2 });
+document.querySelectorAll('[data-cta]').forEach(el => ctaObs.observe(el));
+
+// Stats observer
+const statsEl = document.getElementById('stats');
+const statsObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.querySelectorAll('.stat-card').forEach((c, i) => {
+      setTimeout(() => c.classList.add('visible'), i * 120);
+    });
+    statsObs.unobserve(e.target);
+  });
+}, { threshold: 0.2 });
+statsObs.observe(statsEl);
+
+// ── LOAD ANIMATION ────────────────────────────────────────────────────────
+let loadTriggered = false;
+function triggerLoad() {
+  if (loadTriggered) return;
+  loadTriggered = true;
+
+  function animBar(id, valId, delay) {
+    setTimeout(() => {
+      const bar = document.getElementById(id);
+      const val = document.getElementById(valId);
+      bar.style.width = '100%';
+      let pct = 0;
+      const t = setInterval(() => {
+        pct = Math.min(pct + 4, 100);
+        val.textContent = pct + '%';
+        if (pct >= 100) clearInterval(t);
+      }, 40);
+    }, delay);
+  }
+
+  animBar('p1','v1', 400);
+  animBar('p2','v2', 1000);
+  animBar('p3','v3', 1600);
+
+  ['bl1','bl2','bl3','bl4'].forEach((id, i) => {
+    setTimeout(() => document.getElementById(id).classList.add('show'), 900 + i * 600);
+  });
+
+  setTimeout(() => {
+    const disp = document.getElementById('count-display');
+    const num  = document.getElementById('count-num');
+    disp.classList.add('show');
+    let count = 0;
+    const t = setInterval(() => {
+      count = Math.min(count + 7, 250);
+      num.textContent = count;
+      if (count >= 250) clearInterval(t);
+    }, 20);
+  }, 3200);
+}
+</script>
+</body>
+</html>
